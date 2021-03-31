@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore;
+using System;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using VueCliMiddleware;
 
 namespace AspNetCoreVueStarter
 {
@@ -8,11 +9,22 @@ namespace AspNetCoreVueStarter
     {
         public static void Main(string[] args)
         {
-            CreateWebHostBuilder(args).Build().Run();
+            if (!CommandLine.Arguments.TryGetOptions(args, true, out string mode, out ushort port, out bool https)) return;
+
+            if (mode == "kill") {
+                Console.WriteLine($"Killing process serving port {port}...");
+                PidUtils.KillPort(port, true, true);
+                return;
+            }
+
+            CreateHostBuilder(args).Build().Run();
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>();
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.UseStartup<Startup>();
+                });
     }
 }
